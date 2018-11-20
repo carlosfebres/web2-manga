@@ -1,0 +1,120 @@
+/*
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+*/
+/* 
+    Created on : 09/10/2018, 12:49:02 PM
+    Author     : Néstor Burgos
+*/
+#textname{
+    width: 60%;
+    height: 30px;
+    margin-top: 8%;
+    margin-left: 20%;
+    margin-right: auto;
+    border-radius: 5px;
+}
+
+#textpassword{
+    width: 60%;
+    height: 30px;
+    margin-top: 8%;
+    margin-left: 20%;
+    margin-right: auto;
+    border-radius: 5px;
+}
+
+#buttonlogin{
+    border-radius: 12px;
+    background-color: #6089FF;
+    border: solid 1px black;
+    width: 30%;
+    height: 35px;
+    margin-left: 50%;
+    margin-top: 8%;
+    color: white;
+   
+}
+
+#texttitle{ 
+    position: absolute;
+    margin-left: 41%;
+    text-align: center;
+    font-family: Arial;
+    color: #FFFFFF;
+}
+
+#container{
+    margin-top: 3%;
+    margin-left: auto;
+    margin-right: auto;
+    border-radius: 12px;
+    width: 440px;
+    height: 475px;
+    background: #FAFAFA;
+    border: solid 2px #6D6D6D;
+   
+}
+
+#textcontainer{
+    margin-top: 6%;
+    text-align: center;
+    font-family: Arial;
+    color: #666666;
+}
+
+#textcontaineralert{
+    margin-top: 1%;
+    text-align: center;
+    font-family: Arial;
+    color: #666666;
+}
+
+#linkregistry{
+    position: absolute;
+    margin-top: 2%;
+    margin-left: 20%;
+    font-size: 85%;
+}
+
+#textregistry{
+    position: absolute;
+    margin-left: 6.8%;
+    margin-top: 2%;
+    font-family: Arial;
+    font-size: 82%;
+}
+
+#header{
+    width: 1265px;
+    height: 85px;
+    background: #4E4E4E;
+}
+
+.inputs{
+    width: 60%;
+    height: 30px;
+    margin-top: 3%;
+    margin-left: 20%;
+    margin-right: auto;
+    border-radius: 5px;
+}
+
+#buttonregistry{
+    border-radius: 12px;
+    background-color: #6089FF;
+    border: solid 1px black;
+    width: 30%;
+    height: 35px;
+    margin-left: 50%;
+    margin-top: 5%;
+    color: white;
+}
+
+#linklogout{
+    position: absolute;
+    margin-top: 2%;
+    margin-left: 85%;
+    font-size: 85%;
+}
