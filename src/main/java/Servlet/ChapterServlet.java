@@ -30,7 +30,8 @@ public class ChapterServlet extends HttpServlet {
         String manga_name = (String) requestJsonMap.get("manga_name");
         String manga_genre = (String) requestJsonMap.get("manga_genre");
         FolderCreator folderCreator = new FolderCreator();
-        String path = folderCreator.createChapterFolder(manga_genre,manga_name,chapter_number,chapter_title);
+
+        String path = folderCreator.createChapterFolder(manga_name,chapter_number,chapter_title);
 
 
         // Find this file id in database to get file name, and file type
@@ -107,7 +108,7 @@ public class ChapterServlet extends HttpServlet {
             OutputStream os = null;
             try {
                 FolderCreator  folderCreator = new FolderCreator();
-                String path = folderCreator.createChapterFolder(manga_genre,manga_name,chapter_number,chapter_title);
+                String path = folderCreator.createChapterFolder(manga_name,chapter_number,chapter_title);
                 os = new FileOutputStream(path+"/"+getFileName(chapterFilePart));
                 int read = 0;
                 byte[] bytes = new byte[1024];

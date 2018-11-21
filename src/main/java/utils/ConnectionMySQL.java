@@ -13,11 +13,10 @@ public class ConnectionMySQL {
             return conn;
 
         System.out.println("Creating DB Connection!");
-        Props props = new Props();
-        String url = "jdbc:mysql://" + props.getProperty("DBHost") + ":" + "3306" + "/" + props.getProperty("DBName");
+        String url = "jdbc:mysql://" + Props.getProperty("DBHost") + ":" + Props.getProperty("DBPort") + "/" + Props.getProperty("DBName");
         try {
             Class.forName("com.mysql.jdbc.Driver");
-            conn = DriverManager.getConnection(url, props.getProperty("DBUser"), props.getProperty("DBPass"));
+            conn = DriverManager.getConnection(url, Props.getProperty("DBUser"), Props.getProperty("DBPass"));
         } catch (ClassNotFoundException | SQLException e) {
             System.err.println("Error: " + e);
         }

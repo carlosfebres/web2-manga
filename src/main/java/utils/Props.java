@@ -4,10 +4,12 @@ import java.io.*;
 import java.util.Properties;
 
 public class Props {
-    Properties props;
+    public static Props props = null;
 
-    Props() {
-        props = new Properties();
+    public Properties properties;
+
+    public Props() {
+        properties = new Properties();
         InputStream is = null;
 
         try {
@@ -22,13 +24,16 @@ public class Props {
             if (is == null) {
                 is = getClass().getResourceAsStream("C:\\java\\web2\\Manga - Copy\\config.properties");
             }
-            props.load(is);
+            properties.load(is);
         } catch (Exception e) {
             System.out.println(e);
         }
     }
 
-    String getProperty(String s) {
-        return props.getProperty(s);
+    public static String getProperty(String s) {
+        if (Props.props == null) {
+            Props.props = new Props();
+        }
+        return Props.props.properties.getProperty(s);
     }
 }
