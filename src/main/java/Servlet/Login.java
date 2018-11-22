@@ -18,7 +18,6 @@ import java.io.PrintWriter;
 @WebServlet( name = "login", urlPatterns = "/Login" )
 public class Login extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        response.setContentType("text/html;charset=UTF-8");
         PrintWriter out = response.getWriter();
 
         String username = request.getParameter("user");
@@ -34,7 +33,7 @@ public class Login extends HttpServlet {
             resp.setMessage("User Logged!");
             resp.setStatus(200);
             resp.setData(user);
-            System.out.println("logged in user with id: " + user.user_id);
+            System.out.println("logged in user with id: " + user.userId);
             user.storeSession(request);
         } else {
             resp.setMessage("Authentication Failed");
@@ -45,7 +44,7 @@ public class Login extends HttpServlet {
     }
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        System.out.println("Login Servlet");
+        System.out.println("Login LikesServlet");
     }
 
     @Override

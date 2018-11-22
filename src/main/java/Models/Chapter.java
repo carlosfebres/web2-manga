@@ -1,5 +1,8 @@
 package Models;
 
+import Interfaces.CommentAble;
+import Interfaces.Likeable;
+import Interfaces.Model;
 import utils.ConnectionMySQL;
 import utils.Props;
 
@@ -8,11 +11,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
-public class Chapter {
-	int chapter_id;
+public class Chapter implements Model, Likeable, CommentAble<CommentChapter> {
+	int chapter_id = -1;
 	int manga_id;
 	int chapter_number;
 	int chapter_num_pages;
@@ -21,7 +23,7 @@ public class Chapter {
 	String chapter_creation_time;
 	public int likes;
 
-	public List<Commet> commets = new ArrayList<>();
+	public List<CommentChapter> comments = new ArrayList<>();
 
 	public static Chapter get(int id) {
 
@@ -32,6 +34,7 @@ public class Chapter {
 		try {
 			ps = ConnectionMySQL.getConnection().prepareStatement(Props.getProperty("get_chapter"));
 			ps.setInt(1, id);
+			System.out.println(Props.getProperty("get_chapter"));
 			rs = ps.executeQuery();
 			if (rs.next()) {
 				chapter = new Chapter();
@@ -41,6 +44,9 @@ public class Chapter {
 				chapter.setChapter_title(rs.getString("chapter_title"));
 				chapter.setChapter_location(rs.getString("chapter_location"));
 				chapter.setChapter_num_pages(rs.getInt("chapter_num_pages"));
+				chapter.setChapter_creation_time(rs.getString("chapter_creation_time"));
+			} else {
+				System.out.println("Chapter Not Found");
 			}
 
 		} catch (SQLException e) {
@@ -52,10 +58,8 @@ public class Chapter {
 
 	public boolean save() {
 		PreparedStatement ps = null;
-		ResultSet rs = null;
-
 		try {
-			if (this.manga_id == -1) {
+			if (this.chapter_id == -1) {
 				// INSERT NEW MANGA
 				String insertQuery = Props.getProperty("insert_chapter");
 				ps = ConnectionMySQL.getConnection().prepareStatement(insertQuery, Statement.RETURN_GENERATED_KEYS);
@@ -69,7 +73,7 @@ public class Chapter {
 
 				try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
 					if (generatedKeys.next()) {
-						this.setManga_id(generatedKeys.getInt(1));
+						this.setChapter_id(generatedKeys.getInt(1));
 					} else {
 						throw new SQLException("Creating chapter failed, no ID obtained.");
 					}
@@ -97,6 +101,36 @@ public class Chapter {
 	}
 
 
+	@Override
+	public boolean unlikedBy(User user) {
+		PreparedStatement ps = null;
+		try {
+			String updateQuery = Props.getProperty("delete_chapter_like");
+			ps = ConnectionMySQL.getConnection().prepareStatement(updateQuery);
+			ps.setInt(1, this.getChapter_id());
+			ps.setInt(2, user.getUserId());
+			ps.executeUpdate();
+			return true;
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return false;
+	}
+
+	public boolean delete() {
+		PreparedStatement ps = null;
+		try {
+			String deleteQuery = Props.getProperty("delete_chapter");
+			ps = ConnectionMySQL.getConnection().prepareStatement(deleteQuery);
+			ps.setInt(1, this.getChapter_id());
+			ps.executeUpdate();
+			return true;
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return false;
+	}
+
 
 	public int getLikes() {
 		PreparedStatement ps = null;
@@ -123,7 +157,7 @@ public class Chapter {
 		try {
 			ps = ConnectionMySQL.getConnection().prepareStatement(Props.getProperty("sql_chapter_is_liked_by"));
 			ps.setInt(1, this.getChapter_id());
-			ps.setInt(2, user.getUser_id());
+			ps.setInt(2, user.getUserId());
 			rs = ps.executeQuery();
 			rs.last();
 			return rs.getRow() > 0;
@@ -141,7 +175,7 @@ public class Chapter {
 			try {
 				ps = ConnectionMySQL.getConnection().prepareStatement(Props.getProperty("sql_chapter_liked_by"));
 				ps.setInt(1, this.getChapter_id());
-				ps.setInt(2, user.getUser_id());
+				ps.setInt(2, user.getUserId());
 				ps.executeUpdate();
 				return true;
 			} catch (SQLException e) {
@@ -208,5 +242,35 @@ public class Chapter {
 
 	public void setChapter_creation_time(String chapter_creation_time) {
 		this.chapter_creation_time = chapter_creation_time;
+	}
+
+	@Override
+	public List<CommentChapter> getComments() {
+		if (this.comments.isEmpty()) {
+			this.fetchComments();
+		}
+		return comments;
+	}
+
+	@Override
+	public void fetchComments() {
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		try {
+			ps = ConnectionMySQL.getConnection().prepareStatement(Props.getProperty("get_chapter_comments"));
+			ps.setInt(1, this.getChapter_id());
+			rs = ps.executeQuery();
+			while (rs.next()) {
+				this.addComment(CommentChapter.get(rs.getInt("comment_id")));
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+
+	}
+
+	@Override
+	public void addComment(CommentChapter comment) {
+		this.comments.add(comment);
 	}
 }

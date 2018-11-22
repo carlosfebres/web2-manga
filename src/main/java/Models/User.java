@@ -1,8 +1,10 @@
 package Models;
 
+import Interfaces.Model;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import utils.ConnectionMySQL;
+import utils.Props;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
@@ -10,17 +12,16 @@ import java.io.IOException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.stream.Collectors;
+import java.sql.Statement;
 
-public class User {
-    public int user_id;
-    public int type_id;
-    public String user_username;
-    public String user_name;
-    public String user_email;
-    public String user_creation_time;
+public class User implements Model {
+    public int userId;
+    public int typeId;
+    public String userUsername;
+    public String userName;
+    public String userEmail;
+    public String userCreationTime;
+    private String password;
 
     public static User get(int id) {
 
@@ -31,19 +32,18 @@ public class User {
         User user = null;
 
         try {
-            ps = ConnectionMySQL.getConnection().prepareStatement("SELECT * FROM users WHERE user_id = ?");
+            ps = ConnectionMySQL.getConnection().prepareStatement(Props.getProperty("get_users"));
             ps.setInt(1, id);
             rs = ps.executeQuery();
             if (rs.next()) {
                 user = new User();
-                user.setType_id(rs.getInt("type_id"));
-                user.setUser_creation_time(rs.getString("user_creation_time"));
-                user.setUser_email(rs.getString("user_email"));
-                user.setUser_id(rs.getInt("user_id"));
-                user.setUser_name(rs.getString("user_name"));
-                user.setUser_username(rs.getString("user_username"));
+                user.setTypeId(rs.getInt("type_id"));
+                user.setUserCreationTime(rs.getString("user_creation_time"));
+                user.setUserEmail(rs.getString("user_email"));
+                user.setUserId(rs.getInt("user_id"));
+                user.setUserName(rs.getString("user_name"));
+                user.setUserUsername(rs.getString("user_username"));
             }
-
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -64,52 +64,52 @@ public class User {
         return null;
     }
 
-    public int getUser_id() {
-        return user_id;
+    public int getUserId() {
+        return userId;
     }
 
-    public void setUser_id(int user_id) {
-        this.user_id = user_id;
+    public void setUserId(int user_id) {
+        this.userId = user_id;
     }
 
-    public int getType_id() {
-        return type_id;
+    public int getTypeId() {
+        return typeId;
     }
 
-    public void setType_id(int type_id) {
-        this.type_id = type_id;
+    public void setTypeId(int type_id) {
+        this.typeId = type_id;
     }
 
-    public String getUser_username() {
-        return user_username;
+    public String getUserUsername() {
+        return userUsername;
     }
 
-    public void setUser_username(String user_username) {
-        this.user_username = user_username;
+    public void setUserUsername(String user_username) {
+        this.userUsername = user_username;
     }
 
-    public String getUser_name() {
-        return user_name;
+    public String getUserName() {
+        return userName;
     }
 
-    public void setUser_name(String user_name) {
-        this.user_name = user_name;
+    public void setUserName(String user_name) {
+        this.userName = user_name;
     }
 
-    public String getUser_email() {
-        return user_email;
+    public String getUserEmail() {
+        return userEmail;
     }
 
-    public void setUser_email(String user_email) {
-        this.user_email = user_email;
+    public void setUserEmail(String user_email) {
+        this.userEmail = user_email;
     }
 
-    public String getUser_creation_time() {
-        return user_creation_time;
+    public String getUserCreationTime() {
+        return userCreationTime;
     }
 
-    public void setUser_creation_time(String user_creation_time) {
-        this.user_creation_time = user_creation_time;
+    public void setUserCreationTime(String user_creation_time) {
+        this.userCreationTime = user_creation_time;
     }
 
     public void storeSession(HttpServletRequest request) {
@@ -121,5 +121,60 @@ public class User {
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public boolean save() {PreparedStatement ps = null;
+        PreparedStatement pst = null;
+        ResultSet rs = null;
+
+        Response<User> resp = new Response<>();
+
+        try {
+            String query = Props.getProperty("query_check");
+            pst = ConnectionMySQL.getConnection().prepareStatement(query);
+            pst.setString(1, userUsername);
+            rs = pst.executeQuery();
+
+            if (!rs.absolute(1)) {
+
+                String insertQuery = Props.getProperty("insert_user");
+                ps = ConnectionMySQL.getConnection().prepareStatement(insertQuery, Statement.RETURN_GENERATED_KEYS);
+                ps.setString(1, this.getUserEmail());
+                ps.setString(2, this.getUserName());
+                ps.setString(3, this.getPassword());
+                ps.setString(4, this.getUserUsername());
+                ps.setInt(5, this.getTypeId());
+                System.out.println(ps.toString());
+                if (ps.executeUpdate() == 1) {
+                    try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
+                        if (generatedKeys.next()) {
+                            this.setUserId( generatedKeys.getInt(1) );
+                            return true;
+                        } else {
+                            throw new SQLException("Creating user failed, no ID obtained.");
+                        }
+                    }
+                }
+            }
+
+        } catch (SQLException e) {
+            System.err.println("Error " + e);
+
+        }
+        return false;
+    }
+
+    @Override
+    public boolean delete() {
+        return false;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    private String getPassword() {
+        return password;
     }
 }

@@ -17,45 +17,48 @@ import java.io.PrintWriter;
 @WebServlet(name = "user", urlPatterns = {"/user"})
 public class User extends HttpServlet {
 
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        Response<Models.User> res = new Response<>();
-        Models.User user = Models.User.fromSession(request);
-        if (user != null) {
-            res.setStatus(200);
-            res.setMessage("User Information");
-            res.setData(user);
-        } else {
-            res.setStatus(401);
-            res.setMessage("Must Log In");
-        }
-        ObjectMapper objMapper = new ObjectMapper();
-        response.getWriter().print( objMapper.writeValueAsString(res) );
-    }
+	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		Response<Models.User> res = new Response<>();
+		Models.User user = Models.User.fromSession(request);
+		if (user != null) {
+			res.setStatus(200);
+			res.setMessage("User Information");
+			res.setData(user);
+		} else {
+			res.setStatus(401);
+			res.setMessage("Must Log In");
+		}
+		ObjectMapper objMapper = new ObjectMapper();
+		response.getWriter().print(objMapper.writeValueAsString(res));
+	}
 
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        response.setContentType("text/html;charset=UTF-8");
-        PrintWriter out = response.getWriter();
+	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		String name = request.getParameter("name");
+		String user_email = request.getParameter("userEmail");
+		String username = request.getParameter("username");
+		String password = request.getParameter("password");
+		int type_id = Integer.parseInt(request.getParameter("typeId"));
 
-        String name = request.getParameter("name");
-        String last_name = request.getParameter("last_name");
-        String user_email = request.getParameter("user_email");
-        String username = request.getParameter("user");
-        String password = request.getParameter("password");
-        int type_id = Integer.parseInt( request.getParameter("type_id") );
+		Response<Models.User> resp = new Response<>();
 
-        Queries co = new Queries();
-        Response<Models.User> resp = new Response<>();
-        Models.User user = co.registry(name, last_name, user_email, username, password, type_id);
-        if (user != null) {
-            resp.setStatus(200);
-            resp.setMessage("User Registered!");
-            resp.setData( user );
-            user.storeSession(request);
-        } else {
-            resp.setStatus(400);
-            resp.setMessage("This username already exists, please use another one.");
-        }
-        ObjectMapper objMapper = new ObjectMapper();
-        response.getWriter().print( objMapper.writeValueAsString(resp) );
-    }
+		Models.User user = new Models.User();
+		user.setUserName(name);
+		user.setUserEmail(user_email);
+		user.setUserUsername(username);
+		user.setPassword(password);
+		user.setTypeId(type_id);
+
+
+		if (user.save()) {
+			resp.setStatus(200);
+			resp.setMessage("User Registered!");
+			resp.setData(user);
+			user.storeSession(request);
+		} else {
+			resp.setStatus(400);
+			resp.setMessage("This username already exists, please use another one.");
+		}
+		ObjectMapper objMapper = new ObjectMapper();
+		response.getWriter().print(objMapper.writeValueAsString(resp));
+	}
 }

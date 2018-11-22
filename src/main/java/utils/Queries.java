@@ -26,12 +26,12 @@ public class Queries {
 
 			if (rs.absolute(1)) {
 				User user = new User();
-				user.setType_id(rs.getInt("type_id"));
-				user.setUser_creation_time(rs.getString("user_creation_time"));
-				user.setUser_email(rs.getString("user_email"));
-				user.setUser_id(rs.getInt("user_id"));
-				user.setUser_name(rs.getString("user_name"));
-				user.setUser_username(rs.getString("user_username"));
+				user.setTypeId(rs.getInt("type_id"));
+				user.setUserCreationTime(rs.getString("user_creation_time"));
+				user.setUserEmail(rs.getString("user_email"));
+				user.setUserId(rs.getInt("user_id"));
+				user.setUserName(rs.getString("user_name"));
+				user.setUserUsername(rs.getString("user_username"));
 				return user;
 			}
 		} catch (SQLException e) {
@@ -96,7 +96,7 @@ public class Queries {
 			try {
 				System.out.println("starting transaction");
 				ArrayList<String> queries = new ArrayList<String>();
-				queries.add("insert into manga (user_id,manga_name,manga_synopsis,manga_status,manga_creation_time) values (?,?,?,?,?)");
+				queries.add("insert into manga (userId,manga_name,manga_synopsis,manga_status,manga_creation_time) values (?,?,?,?,?)");
 				queries.add("select genres_id from genres where genre_des = ?");
 				queries.add("insert into manga_genre (genres_id,manga_id) values (?,?)");
 

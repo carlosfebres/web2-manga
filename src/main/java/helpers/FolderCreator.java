@@ -6,9 +6,10 @@ import java.io.File;
 
 public class FolderCreator {
 
-	public String createChapterFolder(String manga_name, int chapter_number, String chapter_title) {
+	public String createChapterFolder(String manga_name, String chapter_title) {
 		String path = System.getProperty("user.dir") + "/uploads/" + manga_name + "/chapters/" + chapter_title;
-		boolean fileCreated = new File(path).mkdirs();
+		System.out.println(path);
+		new File(path).mkdirs();
 		return path;
 	}
 
