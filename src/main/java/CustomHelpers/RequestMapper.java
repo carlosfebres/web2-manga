@@ -28,6 +28,26 @@ public class RequestMapper {
 		return object;
 	}
 
+	public static Object toObject(HttpServletRequest request, Class<? extends Object> className) {
+		String data;
+		Object object = null;
+		try {
+			data = RequestMapper.getRequest(request);
+			if (!data.isEmpty()) {
+				ObjectMapper mapper = new ObjectMapper();
+				mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+				object = mapper.readValue(data, className);
+			} else {
+				System.out.println("Data from request was empty");
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return object;
+	}
+
+
+
 	public static HashMap<String, String> toMap(HttpServletRequest request) {
 		HashMap<String, String> jsonMap = null;
 		String data = null;
