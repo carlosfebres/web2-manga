@@ -109,19 +109,16 @@ public class User implements Model {
 
 	@Override
 	public boolean save() {
-		PreparedStatement ps;
-		PreparedStatement pst;
-		ResultSet rs;
 		try {
 			if (this.getUserId() == -1) {
 				String query = Props.getProperty("query_check");
-				pst = ConnectionMySQL.getConnection().prepareStatement(query);
+				PreparedStatement pst = ConnectionMySQL.getConnection().prepareStatement(query);
 				pst.setString(1, userUsername);
-				rs = pst.executeQuery();
+				ResultSet rs = pst.executeQuery();
 
 				if (!rs.absolute(1)) {
 					String insertQuery = Props.getProperty("insert_user");
-					ps = ConnectionMySQL.getConnection().prepareStatement(insertQuery, Statement.RETURN_GENERATED_KEYS);
+					PreparedStatement ps = ConnectionMySQL.getConnection().prepareStatement(insertQuery, Statement.RETURN_GENERATED_KEYS);
 					ps.setString(1, this.getUserEmail());
 					ps.setString(2, this.getUserName());
 					ps.setString(3, this.password);
@@ -140,7 +137,7 @@ public class User implements Model {
 				}
 			} else {
 				String updateQuery = Props.getProperty("update_user");
-				ps = ConnectionMySQL.getConnection().prepareStatement(updateQuery);
+				PreparedStatement ps = ConnectionMySQL.getConnection().prepareStatement(updateQuery);
 				ps.setString(1, this.getUserEmail());
 				ps.setString(2, this.getUserName());
 				ps.setString(3, this.password);

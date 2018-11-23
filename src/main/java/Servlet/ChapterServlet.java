@@ -30,6 +30,8 @@ public class ChapterServlet extends HttpServlet {
 			String chapterId = scanner.next();
 
 			Chapter chapter = Chapter.get( chapterId );
+			Tracker.getFor( chapter.getMangaId(), User.fromSession(req).getUserId() ).addChapter(chapter);
+
 			response.setStatus(200);
 			response.setMessage("Found!");
 			response.setData(chapter);

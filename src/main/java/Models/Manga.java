@@ -24,6 +24,8 @@ public class Manga implements Model, Likeable, CommentAble<CommentManga> {
 	private String mangaCreationTime;
 	private LikeManga userLiked;
 
+	private Tracker tracker;
+
 	private List<User> subscribers = new ArrayList();
 
 	public void fillSubscribers() {
@@ -305,6 +307,15 @@ public class Manga implements Model, Likeable, CommentAble<CommentManga> {
 		String[] genres_ids = ids.split(",");
 		for (String id : genres_ids) {
 			this.add_genre(Integer.parseInt(id));
+		}
+	}
+
+	public Tracker getTracker() {
+		try {
+			return Tracker.getFor( this.getMangaId(), this.getUserId() );
+		} catch (ModelNotFound modelNotFound) {
+			modelNotFound.printStackTrace();
+			return null;
 		}
 	}
 }
