@@ -20,7 +20,7 @@ public class Main {
         ctx = tomcat.addWebapp("/", System.getProperty("user.dir") + "\\" + web_app);
         ctx.setAllowCasualMultipartParsing(true);
 
-        Tomcat.addServlet(ctx, "LoginServlet", new Login());
+        Tomcat.addServlet(ctx, "LoginServlet", new LoginServlet());
         ctx.addServletMappingDecoded("/login", "LoginServlet");
 
         Tomcat.addServlet(ctx, "RegistryServlet", new Registry());
@@ -29,7 +29,7 @@ public class Main {
         Tomcat.addServlet(ctx, "LogoutServlet", new Logout());
         ctx.addServletMappingDecoded("/logout", "LogoutServlet");
 
-        Tomcat.addServlet(ctx, "UserServlet", new User());
+        Tomcat.addServlet(ctx, "UserServlet", new UserServlet());
         ctx.addServletMappingDecoded("/user", "UserServlet");
 
         Tomcat.addServlet(ctx, "MangaServlet", new MangaServlet());

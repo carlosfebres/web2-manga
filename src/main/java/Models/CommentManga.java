@@ -1,9 +1,10 @@
 package Models;
 
+import Exceptions.ModelNotFound;
 import Interfaces.CommentModel;
 import Interfaces.Model;
-import utils.ConnectionMySQL;
-import utils.Props;
+import CustomUtils.ConnectionMySQL;
+import CustomUtils.Props;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -11,56 +12,63 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 public class CommentManga implements CommentModel {
-	private int manga_id;
-	int comment_id = -1;
-	int user_id;
-	String comment_content;
-	String comment_creation_time;
+	private int commentId = -1;
+	private int mangaId;
+	private int userId;
+	private String commentContent;
+	private String commentCreationTime;
 
-	public static CommentManga get(int id) {
 
-		PreparedStatement ps = null;
-		ResultSet rs = null;
-		CommentManga comment = null;
-
-		try {
-			ps = ConnectionMySQL.getConnection().prepareStatement(Props.getProperty( "get_comment_manga" ));
-			ps.setInt(1, id);
-			rs = ps.executeQuery();
-			if (rs.next()) {
-				comment = new CommentManga();
-				comment.setComment_id(rs.getInt("comment_id"));
-				comment.setManga_id(rs.getInt("manga_id"));
-				comment.setUser_id(rs.getInt("user_id"));
-				comment.setComment_content(rs.getString("comment_content"));
-				comment.setComment_creation_time(rs.getString("comment_creation_time"));
-			}
-
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
+	public static CommentManga get(int id) throws ModelNotFound {
+		CommentManga comment = new CommentManga();
+		CommentManga.fetchAndFill(id, comment );
 		return comment;
 	}
 
+	public static CommentManga get(String comment_id) throws ModelNotFound {
+		return CommentManga.get( Integer.parseInt(comment_id) );
+	}
+
+	public void fetch() throws ModelNotFound {
+		CommentManga.fetchAndFill( this.getCommentId(), this );
+	}
+
+	private static void fetchAndFill(int id, Model obj) throws ModelNotFound {
+		CommentManga model = (CommentManga) obj;
+		try {
+			PreparedStatement ps = ConnectionMySQL.getConnection().prepareStatement(Props.getProperty("get_comment_manga"));
+			ps.setInt(1, id);
+			ResultSet rs = ps.executeQuery();
+			if (rs.next()) {
+				model.setCommentId(rs.getInt("comment_id"));
+				model.setMangaId(rs.getInt("manga_id"));
+				model.setUserId(rs.getInt("user_id"));
+				model.setCommentContent(rs.getString("comment_content"));
+				model.setCommentCreationTime(rs.getString("comment_creation_time"));
+			} else {
+				throw new ModelNotFound("Comment Manga");
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
 
 	public boolean save() {
-		PreparedStatement ps = null;
-		ResultSet rs = null;
-
+		PreparedStatement ps;
 		try {
-			if (this.comment_id == -1) {
+			if (this.commentId == -1) {
 				// INSERT NEW COMMENT
 				String insertQuery = Props.getProperty( "insert_comment_manga" );
 				ps = ConnectionMySQL.getConnection().prepareStatement(insertQuery, Statement.RETURN_GENERATED_KEYS);
-				ps.setInt(1, this.getUser_id());
-				ps.setInt(2, this.getManga_id());
-				ps.setString(3, this.getComment_content());
+				ps.setInt(1, this.getUserId());
+				ps.setInt(2, this.getMangaId());
+				ps.setString(3, this.getCommentContent());
 
 				ps.executeUpdate();
 
 				try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
 					if (generatedKeys.next()) {
-						this.setComment_id(generatedKeys.getInt(1));
+						this.setCommentId(generatedKeys.getInt(1));
 					} else {
 						throw new SQLException("Creating chapter comment failed, no ID obtained.");
 					}
@@ -71,10 +79,10 @@ public class CommentManga implements CommentModel {
 				// 	UPDATE COMMENT
 				String updateQuery = Props.getProperty( "update_comment_manga" );
 				ps = ConnectionMySQL.getConnection().prepareStatement(updateQuery);
-				ps.setInt(1, this.getUser_id());
-				ps.setInt(2, this.getManga_id());
-				ps.setString(3, this.getComment_content());
-				ps.setInt(4, this.getComment_id());
+				ps.setInt(1, this.getUserId());
+				ps.setInt(2, this.getMangaId());
+				ps.setString(3, this.getCommentContent());
+				ps.setInt(4, this.getCommentId());
 				ps.executeUpdate();
 
 				return true;
@@ -85,13 +93,12 @@ public class CommentManga implements CommentModel {
 		return false;
 	}
 
-
 	public boolean delete() {
-		PreparedStatement ps = null;
+		PreparedStatement ps;
 		try {
 			String deleteQuery = Props.getProperty("delete_comment_manga");
 			ps = ConnectionMySQL.getConnection().prepareStatement(deleteQuery);
-			ps.setInt(1, this.getComment_id());
+			ps.setInt(1, this.getCommentId());
 			ps.executeUpdate();
 			return true;
 		} catch (SQLException e) {
@@ -100,48 +107,49 @@ public class CommentManga implements CommentModel {
 		return false;
 	}
 
+	// -------- GETTERS AND SETTERS -------- //
 
-	public int getComment_id() {
-		return comment_id;
+	public int getCommentId() {
+		return commentId;
 	}
 
-	public void setComment_id(int comment_id) {
-		this.comment_id = comment_id;
+	public void setCommentId(int commentId) {
+		this.commentId = commentId;
 	}
 
-	public String getComment_creation_time() {
-		return comment_creation_time;
+	public String getCommentCreationTime() {
+		return commentCreationTime;
 	}
 
-	public void setComment_creation_time(String comment_creation_time) {
-		this.comment_creation_time = comment_creation_time;
+	public void setCommentCreationTime(String commentCreationTime) {
+		this.commentCreationTime = commentCreationTime;
 	}
 
-	public int getUser_id() {
-		return user_id;
+	public int getUserId() {
+		return userId;
 	}
 
 	public void setId(int id) {
-		this.setManga_id(id);
+		this.setMangaId(id);
 	}
 
-	public void setUser_id(int user_id) {
-		this.user_id = user_id;
+	public void setUserId(int userId) {
+		this.userId = userId;
 	}
 
-	public int getManga_id() {
-		return manga_id;
+	public int getMangaId() {
+		return mangaId;
 	}
 
-	public void setManga_id(int manga_id) {
-		this.manga_id = manga_id;
+	public void setMangaId(int mangaId) {
+		this.mangaId = mangaId;
 	}
 
-	public String getComment_content() {
-		return comment_content;
+	public String getCommentContent() {
+		return commentContent;
 	}
 
-	public void setComment_content(String comment_content) {
-		this.comment_content = comment_content;
+	public void setCommentContent(String commentContent) {
+		this.commentContent = commentContent;
 	}
 }

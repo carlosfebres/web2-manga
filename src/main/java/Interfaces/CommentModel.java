@@ -1,7 +1,9 @@
 package Interfaces;
 
+import Exceptions.ModelNotFound;
+
 public interface CommentModel extends Model {
 	void setId(int id);
-	void setUser_id(int id);
-	void setComment_content(String content);
+	void setUserId(int id);
+	void setCommentContent(String content);
 }

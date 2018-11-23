@@ -1,10 +1,11 @@
 package Models;
 
+import Exceptions.ModelNotFound;
 import Interfaces.Model;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import utils.ConnectionMySQL;
-import utils.Props;
+import CustomUtils.ConnectionMySQL;
+import CustomUtils.Props;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
@@ -15,166 +16,206 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 public class User implements Model {
-    public int userId;
-    public int typeId;
-    public String userUsername;
-    public String userName;
-    public String userEmail;
-    public String userCreationTime;
-    private String password;
+	private int userId = -1;
+	private int typeId;
+	private String userUsername;
+	private String userName;
+	private String userEmail;
+	private String userCreationTime;
+	private String password;
 
-    public static User get(int id) {
 
-        PreparedStatement ps = null;
-        PreparedStatement pst = null;
-        ResultSet rs = null;
-        ObjectMapper objMapper = new ObjectMapper();
-        User user = null;
+	public static User get(int id) throws ModelNotFound {
+		User user = new User();
+		User.fetchAndFill(id, user);
+		return user;
+	}
 
-        try {
-            ps = ConnectionMySQL.getConnection().prepareStatement(Props.getProperty("get_users"));
-            ps.setInt(1, id);
-            rs = ps.executeQuery();
-            if (rs.next()) {
-                user = new User();
-                user.setTypeId(rs.getInt("type_id"));
-                user.setUserCreationTime(rs.getString("user_creation_time"));
-                user.setUserEmail(rs.getString("user_email"));
-                user.setUserId(rs.getInt("user_id"));
-                user.setUserName(rs.getString("user_name"));
-                user.setUserUsername(rs.getString("user_username"));
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return user;
-    }
+	public static User get(String id) throws ModelNotFound {
+		return User.get(Integer.parseInt(id));
+	}
 
-    public static User fromSession(HttpServletRequest request) {
-        HttpSession session = (HttpSession) request.getSession();
-        String user = (String) session.getAttribute("user");
-        if (user != null) {
-            ObjectMapper objMapper = new ObjectMapper();
-            try {
-                return objMapper.readValue(user, User.class);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        return null;
-    }
+	public void fetch() throws ModelNotFound {
+		User.fetchAndFill(this.getUserId(), this);
+	}
 
-    public int getUserId() {
-        return userId;
-    }
+	private static void fetchAndFill(int id, Model obj) throws ModelNotFound {
+		User user = (User) obj;
+		PreparedStatement ps;
+		ResultSet rs;
+		try {
+			ps = ConnectionMySQL.getConnection().prepareStatement(Props.getProperty("get_users"));
+			ps.setInt(1, id);
+			rs = ps.executeQuery();
+			if (rs.next()) {
+				user.setTypeId(rs.getInt("type_id"));
+				user.setUserCreationTime(rs.getString("user_creation_time"));
+				user.setUserEmail(rs.getString("user_email"));
+				user.setUserId(rs.getInt("user_id"));
+				user.setUserName(rs.getString("user_name"));
+				user.setUserUsername(rs.getString("user_username"));
+			} else {
+				throw new ModelNotFound("User");
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
 
-    public void setUserId(int user_id) {
-        this.userId = user_id;
-    }
+	public static User fromSession(HttpServletRequest request) {
+		try {
+			HttpSession session = request.getSession();
+			String user = (String) session.getAttribute("user");
+			if (user != null) {
+				ObjectMapper objMapper = new ObjectMapper();
+				return objMapper.readValue(user, User.class);
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
 
-    public int getTypeId() {
-        return typeId;
-    }
+	public void storeSession(HttpServletRequest request) {
+		try {
+			HttpSession session = request.getSession(true);
+			ObjectMapper objMapper = new ObjectMapper();
+			String json = objMapper.writeValueAsString(this);
+			session.setAttribute("user", json);
+		} catch (JsonProcessingException e) {
+			e.printStackTrace();
+		}
+	}
 
-    public void setTypeId(int type_id) {
-        this.typeId = type_id;
-    }
+	public boolean login() {
+		try {
+			String query = Props.getProperty("sql_autheticate");
+			PreparedStatement ps = ConnectionMySQL.getConnection().prepareStatement(query);
+			ps.setString(1, this.getUserUsername());
+			ps.setString(2, this.password);
+			ResultSet rs = ps.executeQuery();
+			if (rs.next()) {
+				this.setUserId(rs.getInt("user_id"));
+				this.fetch();
+				return true;
+			}
+		} catch (SQLException e) {
+			System.out.println("Error " + e);
+		} catch (ModelNotFound modelNotFound) {
+			modelNotFound.printStackTrace();
+		}
+		return false;
+	}
 
-    public String getUserUsername() {
-        return userUsername;
-    }
+	@Override
+	public boolean save() {
+		PreparedStatement ps;
+		PreparedStatement pst;
+		ResultSet rs;
+		try {
+			if (this.getUserId() == -1) {
+				String query = Props.getProperty("query_check");
+				pst = ConnectionMySQL.getConnection().prepareStatement(query);
+				pst.setString(1, userUsername);
+				rs = pst.executeQuery();
 
-    public void setUserUsername(String user_username) {
-        this.userUsername = user_username;
-    }
+				if (!rs.absolute(1)) {
+					String insertQuery = Props.getProperty("insert_user");
+					ps = ConnectionMySQL.getConnection().prepareStatement(insertQuery, Statement.RETURN_GENERATED_KEYS);
+					ps.setString(1, this.getUserEmail());
+					ps.setString(2, this.getUserName());
+					ps.setString(3, this.password);
+					ps.setString(4, this.getUserUsername());
+					ps.setInt(5, this.getTypeId());
+					if (ps.executeUpdate() == 1) {
+						try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
+							if (generatedKeys.next()) {
+								this.setUserId(generatedKeys.getInt(1));
+								return true;
+							} else {
+								throw new SQLException("Creating user failed, no ID obtained.");
+							}
+						}
+					}
+				}
+			} else {
+				String updateQuery = Props.getProperty("update_user");
+				ps = ConnectionMySQL.getConnection().prepareStatement(updateQuery);
+				ps.setString(1, this.getUserEmail());
+				ps.setString(2, this.getUserName());
+				ps.setString(3, this.password);
+				ps.setString(4, this.getUserUsername());
+				ps.setInt(5, this.getTypeId());
+				ps.setInt(6, this.getUserId());
+				ps.executeUpdate();
+				return true;
+			}
 
-    public String getUserName() {
-        return userName;
-    }
+		} catch (SQLException e) {
+			System.err.println("Error " + e);
 
-    public void setUserName(String user_name) {
-        this.userName = user_name;
-    }
+		}
+		return false;
+	}
 
-    public String getUserEmail() {
-        return userEmail;
-    }
+	@Override
+	public boolean delete() {
+		return false;
+	}
 
-    public void setUserEmail(String user_email) {
-        this.userEmail = user_email;
-    }
+	// -------------------------------------------------
 
-    public String getUserCreationTime() {
-        return userCreationTime;
-    }
 
-    public void setUserCreationTime(String user_creation_time) {
-        this.userCreationTime = user_creation_time;
-    }
+	public int getUserId() {
+		return userId;
+	}
 
-    public void storeSession(HttpServletRequest request) {
-        try {
-            HttpSession session = request.getSession(true);
-            ObjectMapper objMapper = new ObjectMapper();
-            String json = objMapper.writeValueAsString( this );
-            session.setAttribute("user", json);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-        }
-    }
+	public void setUserId(int userId) {
+		this.userId = userId;
+	}
 
-    @Override
-    public boolean save() {PreparedStatement ps = null;
-        PreparedStatement pst = null;
-        ResultSet rs = null;
+	public int getTypeId() {
+		return typeId;
+	}
 
-        Response<User> resp = new Response<>();
+	public void setTypeId(int typeId) {
+		this.typeId = typeId;
+	}
 
-        try {
-            String query = Props.getProperty("query_check");
-            pst = ConnectionMySQL.getConnection().prepareStatement(query);
-            pst.setString(1, userUsername);
-            rs = pst.executeQuery();
+	public String getUserUsername() {
+		return userUsername;
+	}
 
-            if (!rs.absolute(1)) {
+	public void setUserUsername(String userUsername) {
+		this.userUsername = userUsername;
+	}
 
-                String insertQuery = Props.getProperty("insert_user");
-                ps = ConnectionMySQL.getConnection().prepareStatement(insertQuery, Statement.RETURN_GENERATED_KEYS);
-                ps.setString(1, this.getUserEmail());
-                ps.setString(2, this.getUserName());
-                ps.setString(3, this.getPassword());
-                ps.setString(4, this.getUserUsername());
-                ps.setInt(5, this.getTypeId());
-                System.out.println(ps.toString());
-                if (ps.executeUpdate() == 1) {
-                    try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
-                        if (generatedKeys.next()) {
-                            this.setUserId( generatedKeys.getInt(1) );
-                            return true;
-                        } else {
-                            throw new SQLException("Creating user failed, no ID obtained.");
-                        }
-                    }
-                }
-            }
+	public String getUserName() {
+		return userName;
+	}
 
-        } catch (SQLException e) {
-            System.err.println("Error " + e);
+	public void setUserName(String userName) {
+		this.userName = userName;
+	}
 
-        }
-        return false;
-    }
+	public String getUserEmail() {
+		return userEmail;
+	}
 
-    @Override
-    public boolean delete() {
-        return false;
-    }
+	public void setUserEmail(String userEmail) {
+		this.userEmail = userEmail;
+	}
 
-    public void setPassword(String password) {
-        this.password = password;
-    }
+	public String getUserCreationTime() {
+		return userCreationTime;
+	}
 
-    private String getPassword() {
-        return password;
-    }
+	public void setUserCreationTime(String userCreationTime) {
+		this.userCreationTime = userCreationTime;
+	}
+
+	public void setPassword(String password) {
+		this.password = password;
+	}
+
 }
