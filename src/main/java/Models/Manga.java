@@ -24,6 +24,34 @@ public class Manga implements Model, Likeable, CommentAble<CommentManga> {
 	private String mangaCreationTime;
 	private LikeManga userLiked;
 
+	private List<User> subscribers = new ArrayList();
+
+	public void fillSubscribers() {
+		PreparedStatement ps;
+		ResultSet rs;
+		try {
+			ps = ConnectionMySQL.getConnection().prepareStatement(Props.getProperty("get_subscribers_manga"));
+			ps.setInt(1, this.getMangaId());
+			rs = ps.executeQuery();
+			subscribers.clear();
+			while (rs.next()) {
+				User user = new User();
+				user.setTypeId(rs.getInt("type_id"));
+				user.setUserCreationTime(rs.getString("user_creation_time"));
+				user.setUserEmail(rs.getString("user_email"));
+				user.setUserId(rs.getInt("user_id"));
+				user.setUserName(rs.getString("user_name"));
+				user.setUserUsername(rs.getString("user_username"));
+				subscribers.add(user);
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public List<User> getSubscribers() {
+		return subscribers;
+	}
 
 	public static Manga get(int id) throws ModelNotFound {
 		Manga manga = new Manga();

@@ -1,5 +1,6 @@
 package Models;
 
+import CustomHelpers.SendEmail;
 import Exceptions.ModelNotFound;
 import Interfaces.CommentAble;
 import Interfaces.Likeable;
@@ -84,6 +85,7 @@ public class Chapter implements Model, Likeable, CommentAble<CommentChapter> {
 						throw new SQLException("Creating chapter failed, no ID obtained.");
 					}
 				}
+				this.notifyUsers();
 				return true;
 			} else {
 				String updateQuery = Props.getProperty("update_chapter");
@@ -101,6 +103,16 @@ public class Chapter implements Model, Likeable, CommentAble<CommentChapter> {
 			e.printStackTrace();
 		}
 		return false;
+	}
+
+	private void notifyUsers() {
+		try {
+			Manga manga = Manga.get( this.getMangaId() );
+			manga.fillSubscribers();
+			SendEmail.newChapter(manga, this, manga.getSubscribers());
+		} catch (ModelNotFound modelNotFound) {
+			modelNotFound.printStackTrace();
+		}
 	}
 
 	@Override

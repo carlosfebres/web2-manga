@@ -27,7 +27,7 @@ public class LikeChapter implements LikeModel {
 				like = new LikeChapter();
 				like.setLikeId(rs.getInt("like_id"));
 				like.setUserId(rs.getInt("user_id"));
-				like.setMangaId(rs.getInt("chapter_id"));
+				like.setChapterId(rs.getInt("chapter_id"));
 			} else {
 				throw new ModelNotFound("Like Chapter");
 			}
@@ -37,8 +37,8 @@ public class LikeChapter implements LikeModel {
 		return like;
 	}
 
-	public static LikeChapter of(Manga chapter, User user) throws ModelNotFound {
-		return LikeChapter.of(chapter.getMangaId(), user.getUserId());
+	public static LikeChapter of(Chapter chapter, User user) throws ModelNotFound {
+		return LikeChapter.of(chapter.getChapterId(), user.getUserId());
 	}
 
 	public static LikeChapter get(int id) throws ModelNotFound {
@@ -65,7 +65,7 @@ public class LikeChapter implements LikeModel {
 			rs = ps.executeQuery();
 			if (rs.next()) {
 				like.setUserId(rs.getInt("user_id"));
-				like.setMangaId(rs.getInt("chapter_id"));
+				like.setChapterId(rs.getInt("chapter_id"));
 			} else {
 				throw new ModelNotFound("Like Chapter");
 			}
@@ -76,20 +76,20 @@ public class LikeChapter implements LikeModel {
 
 	public boolean save() {
 		try {
-			Manga.get( this.getMangaId() );
+			Chapter.get( this.getChapterId() );
 		} catch (ModelNotFound modelNotFound) {
 			modelNotFound.printStackTrace();
 			return false;
 		}
 		try {
-			LikeChapter check = LikeChapter.of(this.getMangaId(), this.getUserId());
+			LikeChapter check = LikeChapter.of(this.getChapterId(), this.getUserId());
 			this.setLikeId( check.getLikeId() );
 			System.out.println("Already Liked");
 		} catch (ModelNotFound modelNotFound) {
 			try {
 				String insertQuery = Props.getProperty("sql_chapter_liked_by");
 				PreparedStatement ps = ConnectionMySQL.getConnection().prepareStatement(insertQuery, Statement.RETURN_GENERATED_KEYS);
-				ps.setInt(1, this.getMangaId());
+				ps.setInt(1, this.getChapterId());
 				ps.setInt(2, this.getUserId());
 				ps.executeUpdate();
 				try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
@@ -140,11 +140,11 @@ public class LikeChapter implements LikeModel {
 		this.userId = userId;
 	}
 
-	public int getMangaId() {
+	public int getChapterId() {
 		return chapterId;
 	}
 
-	public void setMangaId(int chapterId) {
+	public void setChapterId(int chapterId) {
 		this.chapterId = chapterId;
 	}
 }
