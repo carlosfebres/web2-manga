@@ -109,7 +109,11 @@ public class Chapter implements Model, Likeable, CommentAble<CommentChapter> {
 		try {
 			Manga manga = Manga.get( this.getMangaId() );
 			manga.fillSubscribers();
-			SendEmail.newChapter(manga, this, manga.getSubscribers());
+			SendEmail email = new SendEmail();
+			email.setManga(manga);
+			email.setChapter(this);
+			email.setUsers( manga.getSubscribers() );
+			email.send();
 		} catch (ModelNotFound modelNotFound) {
 			modelNotFound.printStackTrace();
 		}
